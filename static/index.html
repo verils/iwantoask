@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Iwantoask</title>
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+
+<body>
+  <header style="margin-bottom: 1em;">
+    <nav class="navbar navbar-light bg-light">
+      <a href="" class="navbar-brand">Iwantoask</a>
+    </nav>
+  </header>
+  <div id="app">
+    <div class="container">
+      <div class="list-group" v-for="question in questions">
+        <a href="#" class="list-group-item list-group-item-action">
+          <div class="d-flex w-100 justify-content-between">
+            <h5 class="mb-1">{{ question.title }}</h5>
+            <small>{{ question.createdAt }}</small>
+          </div>
+          <p class="mb-1">{{ question.content }}</p>
+          <small>{{ question.createdBy }}</small>
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script>
+  var app = new Vue({
+    el: '#app',
+    data: {
+      questions: [
+        {
+          id: 1,
+          title: 'Hello World!',
+          content: 'This is content',
+          createdBy: 'holloway',
+          createdAt: '2 hours ago'
+        }
+      ]
+    }
+  })
+</script>
+
+</html>

@@ -1,0 +1,109 @@
+basePath: /api
+definitions:
+  app.ErrorResult:
+    properties:
+      details:
+        type: string
+      message:
+        type: string
+    type: object
+  app.Question:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: string
+      id:
+        type: integer
+      path:
+        type: string
+      title:
+        type: string
+      url:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is a simple questioning application
+  license: {}
+  title: Iwantoask API
+  version: "0.1"
+paths:
+  /questions:
+    get:
+      consumes:
+      - application/json
+      description: list all questions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: the result question data
+          schema:
+            items:
+              $ref: '#/definitions/app.Question'
+            type: array
+        "500":
+          description: error messages
+          schema:
+            $ref: '#/definitions/app.ErrorResult'
+      summary: ListQuestions
+      tags:
+      - Questions API
+    post:
+      consumes:
+      - application/json
+      description: create a question
+      parameters:
+      - description: question content
+        in: body
+        name: question
+        required: true
+        schema:
+          $ref: '#/definitions/Question'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: the created question data
+          schema:
+            $ref: '#/definitions/app.Question'
+        "500":
+          description: error messages
+          schema:
+            $ref: '#/definitions/app.ErrorResult'
+      summary: CreateQuestion
+      tags:
+      - Questions API
+  /questions/{id}:
+    get:
+      consumes:
+      - application/json
+      description: get one question
+      parameters:
+      - description: question id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: the result question data
+          schema:
+            items:
+              $ref: '#/definitions/app.Question'
+            type: array
+        "500":
+          description: error messages
+          schema:
+            $ref: '#/definitions/app.ErrorResult'
+      summary: GetQuestion
+      tags:
+      - Questions API
+swagger: "2.0"
