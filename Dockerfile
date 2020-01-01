@@ -2,7 +2,7 @@ FROM alpine
 
 WORKDIR /app
 
-COPY static/ statistic/
+COPY static/ static/
 COPY template/ template/
 COPY iwantoask .
 
