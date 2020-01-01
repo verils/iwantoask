@@ -3,11 +3,13 @@ package app
 import (
 	"database/sql"
 	"fmt"
+	"github.com/atrox/haikunatorgo/v2"
 	_ "github.com/go-sql-driver/mysql"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -64,14 +66,18 @@ func ListQuestions(writer http.ResponseWriter, request *http.Request) {
 
 	db, err := getMysqlConnection()
 	if err != nil {
-		http.Error(writer, fmt.Sprintf("cannot connect to database: %s", err.Error()), http.StatusInternalServerError)
+		message := fmt.Sprintf("cannot connect to database: %s", err.Error())
+		log.Printf("[ERROR]: %s", message)
+		http.Error(writer, message, http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
 
 	rows, err := db.Query("SELECT q.id, q.path, q.title, q.detail, q.asked_at, q.asked_by, u.name FROM questions q LEFT JOIN users u ON q.asked_by = u.username ORDER BY q.asked_at DESC")
 	if err != nil {
-		http.Error(writer, fmt.Sprintf("cannot fetch questions: %s", err.Error()), http.StatusInternalServerError)
+		message := fmt.Sprintf("cannot fetch questions: %s", err.Error())
+		log.Printf("[ERROR]: %s", message)
+		http.Error(writer, message, http.StatusInternalServerError)
 		return
 	}
 
@@ -82,7 +88,9 @@ func ListQuestions(writer http.ResponseWriter, request *http.Request) {
 
 		err = rows.Scan(&question.Id, &question.Path, &question.Title, &question.Detail, &question.AskedAt, &userModel.Username, &userModel.Name)
 		if err != nil {
-			http.Error(writer, fmt.Sprintf("scan error: %s", err.Error()), http.StatusInternalServerError)
+			message := fmt.Sprintf("scan error: %s", err.Error())
+			log.Printf("[ERROR]: %s", message)
+			http.Error(writer, message, http.StatusInternalServerError)
 			return
 		}
 
@@ -136,5 +144,56 @@ func AskQuestion(writer http.ResponseWriter, request *http.Request) {
 }
 
 func SubmitQuestion(writer http.ResponseWriter, request *http.Request) {
-	log.Printf("Post Form: %s", request.PostFormValue("title"))
+	title := request.PostFormValue("title")
+	detail := request.PostFormValue("detail")
+
+	haikunate := haikunator.New()
+	haikunate.Delimiter = "_"
+	haikunate.TokenLength = 0
+	username := haikunate.Haikunate()
+
+	path := strings.ReplaceAll(strings.ToLower(title), " ", "+")
+
+	question := Question{
+		Title:   title,
+		Detail:  detail,
+		Path:    path,
+		Url:     "",
+		AskedAt: time.Now(),
+		AskedBy: User{
+			Username: username,
+			Name:     strings.ReplaceAll(username, "_", " "),
+		},
+		Since: "",
+	}
+
+	db, err := getMysqlConnection()
+	if err != nil {
+		message := fmt.Sprintf("cannot connect to database: %s", err.Error())
+		log.Printf("[ERROR]: %s", message)
+		http.Error(writer, message, http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	result, err := db.Exec("INSERT INTO questions (path, title, detail, asked_at, asked_by) VALUES (?, ?, ?, ?, ?)",
+		question.Path, question.Title, question.Detail, question.AskedAt, question.AskedBy.Username)
+	if err != nil {
+		message := fmt.Sprintf("an error happened when accessing the resources: %s", err.Error())
+		log.Printf("[ERROR]: %s", message)
+		http.Error(writer, message, http.StatusInternalServerError)
+		return
+	}
+	lastInsertId, _ := result.LastInsertId()
+
+	question.Id = int(lastInsertId)
+
+	schema := "http"
+	if request.TLS != nil {
+		schema = "https"
+	}
+	question.Url = fmt.Sprintf("%s://%s/q/%d/%s", schema, request.Host, question.Id, question.Path)
+
+	writer.Header().Set("Location", "/questions")
+	writer.WriteHeader(http.StatusFound)
 }
