@@ -27,12 +27,12 @@ func main() {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/", app.ListQuestions).Methods(http.MethodGet)
-	router.HandleFunc("/questions", app.ListQuestions).Methods(http.MethodGet)
-	router.HandleFunc("/ask", app.AskQuestion).Methods(http.MethodGet)
-	router.HandleFunc("/ask", app.SubmitQuestion).Methods(http.MethodPost)
+	router.HandleFunc("/iwantoask/", app.ListQuestions).Methods(http.MethodGet)
+	router.HandleFunc("/iwantoask/questions", app.ListQuestions).Methods(http.MethodGet)
+	router.HandleFunc("/iwantoask/ask", app.AskQuestion).Methods(http.MethodGet)
+	router.HandleFunc("/iwantoask/ask", app.SubmitQuestion).Methods(http.MethodPost)
 
-	router.PathPrefix("/").Handler(http.FileServer(http.Dir("static/")))
+	router.PathPrefix("/iwantoask/").Handler(http.FileServer(http.Dir("static/")))
 
 	log.Printf("[INFO] server started at port: %d", 8080)
 	_ = http.ListenAndServe(":8080", router)

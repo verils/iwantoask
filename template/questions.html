@@ -13,21 +13,21 @@
 <body>
   <header style="margin-bottom: 1em;">
     <nav class="navbar navbar-light bg-light">
-      <a href="/" class="navbar-brand">Iwantoask</a>
+      <a href="/iwantoask/" class="navbar-brand">Iwantoask</a>
     </nav>
   </header>
   <div class="container" style="margin-bottom: 1em;">
-    <a class="btn btn-primary float-right" href="/ask">Ask Question</a>
+    <a class="btn btn-primary float-right" href="ask">Ask Question</a>
     <h3>Questions</h3>
   </div>
   <div class="container" style="height: 2em; margin-bottom: 1em;">
     <div class="float-right">
       {{ if .SortByRecently }}
-      <span style="margin-right: 12px;" href="questions?sort=recently">recently</span>
-      <a href="questions?sort=interesting">interesting</a>
+      <span style="margin-right: 12px;" href="/iwantoask/questions?sort=recently">recently</span>
+      <a href="/iwantoask/questions?sort=interesting">interesting</a>
       {{ else if .SortByInteresting }}
-      <a style="margin-right: 12px;" href="questions?sort=recently">recently</a>
-      <span href="questions?sort=interesting">interesting</span>
+      <a style="margin-right: 12px;" href="/iwantoask/questions?sort=recently">recently</a>
+      <span href="/iwantoask/questions?sort=interesting">interesting</span>
       {{ end }}
     </div>
   </div>

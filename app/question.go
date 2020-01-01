@@ -194,6 +194,6 @@ func SubmitQuestion(writer http.ResponseWriter, request *http.Request) {
 	}
 	question.Url = fmt.Sprintf("%s://%s/q/%d/%s", schema, request.Host, question.Id, question.Path)
 
-	writer.Header().Set("Location", "/questions")
+	writer.Header().Set("Location", "/iwantoask/questions")
 	writer.WriteHeader(http.StatusFound)
 }
