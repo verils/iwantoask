@@ -2,23 +2,27 @@ package main
 
 import (
 	"github.com/gorilla/mux"
-	httpSwagger "github.com/swaggo/http-swagger"
 	"iwantoask/app"
-	_ "iwantoask/docs"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
+	if os.Getenv(app.MysqlHost) == "" {
+		_ = os.Setenv(app.MysqlHost, "docker.local")
+	}
+	if os.Getenv(app.MysqlUsername) == "" {
+		_ = os.Setenv(app.MysqlUsername, "root")
+	}
+	if os.Getenv(app.MysqlPassword) == "" {
+		_ = os.Setenv(app.MysqlPassword, "")
+	}
+
 	router := mux.NewRouter()
 
-	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(httpSwagger.URL("http://localhost:8080/swagger/doc.json")))
-
-	questionHandler := app.NewQuestionHandler()
-
-	router.HandleFunc("/", questionHandler.ListQuestions).Methods(http.MethodGet)
-	router.HandleFunc("/questions", questionHandler.ListQuestions).Methods(http.MethodGet)
-	router.HandleFunc("/questions/{id}/{path}", app.ShowQuestion).Methods(http.MethodGet)
+	router.HandleFunc("/", app.ListQuestions).Methods(http.MethodGet)
+	router.HandleFunc("/questions", app.ListQuestions).Methods(http.MethodGet)
 	router.HandleFunc("/ask", app.AskQuestion).Methods(http.MethodGet)
 	router.HandleFunc("/ask", app.SubmitQuestion).Methods(http.MethodPost)
 

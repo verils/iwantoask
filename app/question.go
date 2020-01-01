@@ -7,8 +7,13 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
+
+const MysqlHost = "MYSQL_HOST"
+const MysqlUsername = "MYSQL_USERNAME"
+const MysqlPassword = "MYSQL_PASSWORD"
 
 type UserModel struct {
 	Username sql.NullString
@@ -51,17 +56,13 @@ type QuestionsView struct {
 	SortByInteresting bool
 }
 
-type QuestionHandler struct {
-}
-
-func NewQuestionHandler() *QuestionHandler {
-	return &QuestionHandler{}
-}
-
-func (handler *QuestionHandler) ListQuestions(writer http.ResponseWriter, request *http.Request) {
+func ListQuestions(writer http.ResponseWriter, request *http.Request) {
 	sort := request.FormValue("sort")
+	if sort == "" {
+		sort = "recently"
+	}
 
-	db, err := sql.Open("mysql", "root:@tcp(docker.local)/iwantoask?parseTime=true")
+	db, err := getMysqlConnection()
 	if err != nil {
 		http.Error(writer, fmt.Sprintf("cannot connect to database: %s", err.Error()), http.StatusInternalServerError)
 		return
@@ -105,6 +106,13 @@ func (handler *QuestionHandler) ListQuestions(writer http.ResponseWriter, reques
 	})
 }
 
+func getMysqlConnection() (*sql.DB, error) {
+	mysqlHost := os.Getenv(MysqlHost)
+	mysqlUsername := os.Getenv(MysqlUsername)
+	mysqlPassword := os.Getenv(MysqlPassword)
+	return sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/iwantoask?parseTime=true", mysqlUsername, mysqlPassword, mysqlHost))
+}
+
 func calcPeriod(question *Question) {
 	since := time.Since(question.AskedAt)
 	if since.Seconds() < 60 {
@@ -120,10 +128,6 @@ func calcPeriod(question *Question) {
 	} else {
 		question.Since = fmt.Sprintf("%d years ago", int(since.Hours()/24/30/12))
 	}
-}
-
-func ShowQuestion(writer http.ResponseWriter, request *http.Request) {
-
 }
 
 func AskQuestion(writer http.ResponseWriter, request *http.Request) {
