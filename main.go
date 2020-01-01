@@ -9,22 +9,19 @@ import (
 	"net/http"
 )
 
-// @Title Iwantoask API
-// @Description This is a simple questioning application
-// @Version 0.1
-//
-// @License MIT
-//
-// @Host localhost:8080
-// @BasePath /api
 func main() {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/api/questions", app.ListQuestions).Methods(http.MethodGet)
-	router.HandleFunc("/api/questions", app.CreateQuestion).Methods(http.MethodPost)
-	router.HandleFunc("/api/questions/{id}", app.GetQuestion).Methods(http.MethodGet)
-
 	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(httpSwagger.URL("http://localhost:8080/swagger/doc.json")))
+
+	questionHandler := app.NewQuestionHandler()
+
+	router.HandleFunc("/", questionHandler.ListQuestions).Methods(http.MethodGet)
+	router.HandleFunc("/questions", questionHandler.ListQuestions).Methods(http.MethodGet)
+	router.HandleFunc("/questions/{id}/{path}", app.ShowQuestion).Methods(http.MethodGet)
+	router.HandleFunc("/ask", app.AskQuestion).Methods(http.MethodGet)
+	router.HandleFunc("/ask", app.SubmitQuestion).Methods(http.MethodPost)
+
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("static/")))
 
 	log.Printf("server started at port: %d", 8080)

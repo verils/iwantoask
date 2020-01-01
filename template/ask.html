@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Ask a question</title>
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+
+<body>
+  <header style="margin-bottom: 1em;">
+    <nav class="navbar navbar-light bg-light">
+      <a href="/" class="navbar-brand">Iwantoask</a>
+    </nav>
+  </header>
+  <div class="container">
+    <form action="/ask" method="POST">
+      <div class="form-group">
+        <label for="title">Title</label>
+        <input type="text" class="form-control" id="title" name="title">
+        <small id="emailHelp" class="form-text text-muted">The main thing you want to ask for</small>
+      </div>
+      <div class="form-group">
+        <label for="detail">Detail</label>
+        <textarea class="form-control" id="detail" name="detail" rows="10"></textarea>
+        <small id="emailHelp" class="form-text text-muted">To tell about the detail using the 5W1H principle. ('5W1H' means: Who, What, When, Where, Why, How)</small>
+      </div>
+      <button type="submit" class="btn btn-primary">Submit</button>
+      <a href="/" class="btn btn-outline-primary">Back</a>
+    </form>
+  </div>
+</body>
+
+</html>

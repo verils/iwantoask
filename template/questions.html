@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Iwantoask - Make something you want to know</title>
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+
+<body>
+  <header style="margin-bottom: 1em;">
+    <nav class="navbar navbar-light bg-light">
+      <a href="/" class="navbar-brand">Iwantoask</a>
+    </nav>
+  </header>
+  <div class="container" style="margin-bottom: 1em;">
+    <a class="btn btn-primary float-right" href="/ask">Ask Question</a>
+    <h3>Questions</h3>
+  </div>
+  <div class="container" style="height: 1em; margin-bottom: 1em;">
+    <div class="float-right">
+      <span style="margin-right: 12px;" href="questions?sort=recently">recently</span>
+      <a href="questions?sort=interesting">interesting</a>
+    </div>
+  </div>
+  <div id="app">
+    <div class="container">
+      <div class="list-group">
+        {{ range . }}
+        <div class="list-group-item list-group-item-action">
+          <div class="d-flex w-100 justify-content-between">
+            <a href="{{ .Url }}">
+              <h5 class="mb-1">{{ .Title }}</h5>
+            </a>
+            <small>{{ .AskedAt }}</small>
+          </div>
+          <p class="mb-1">{{ .Detail }}</p>
+          <small>{{ .AskedBy.Name }}</small>
+        </div>
+        {{ end }}
+      </div>
+    </div>
+  </div>
+</body>
+
+<script src="https://cdn.bootcss.com/vue/2.6.10/vue.min.js"></script>
+<script>
+  var app = new Vue({
+    el: '#app',
+    data: {
+      questions: []
+    }
+  })
+  fetch('/api/questions').then(r => r.json()).then(j => app.questions = j).catch(e => console.log(e))
+</script>
+
+</html>
