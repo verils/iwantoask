@@ -42,10 +42,13 @@ type Question struct {
 	Url     string
 	AskedAt time.Time
 	AskedBy User
+	Since   string
 }
 
 type QuestionsView struct {
-	Questions []Question
+	Questions         []Question
+	SortByRecently    bool
+	SortByInteresting bool
 }
 
 type QuestionHandler struct {
@@ -56,6 +59,8 @@ func NewQuestionHandler() *QuestionHandler {
 }
 
 func (handler *QuestionHandler) ListQuestions(writer http.ResponseWriter, request *http.Request) {
+	sort := request.FormValue("sort")
+
 	db, err := sql.Open("mysql", "root:@tcp(docker.local)/iwantoask?parseTime=true")
 	if err != nil {
 		http.Error(writer, fmt.Sprintf("cannot connect to database: %s", err.Error()), http.StatusInternalServerError)
@@ -63,7 +68,7 @@ func (handler *QuestionHandler) ListQuestions(writer http.ResponseWriter, reques
 	}
 	defer db.Close()
 
-	rows, err := db.Query("SELECT q.id, q.path, q.title, q.detail, q.asked_at, q.asked_by, u.name FROM questions q LEFT JOIN users u ON q.asked_by = u.username")
+	rows, err := db.Query("SELECT q.id, q.path, q.title, q.detail, q.asked_at, q.asked_by, u.name FROM questions q LEFT JOIN users u ON q.asked_by = u.username ORDER BY q.asked_at DESC")
 	if err != nil {
 		http.Error(writer, fmt.Sprintf("cannot fetch questions: %s", err.Error()), http.StatusInternalServerError)
 		return
@@ -88,11 +93,33 @@ func (handler *QuestionHandler) ListQuestions(writer http.ResponseWriter, reques
 	}
 
 	for i, question := range questions {
-		questions[i].Url = fmt.Sprintf("http://%s/q/%d/%s", request.Host, question.Id, question.Path)
+		questions[i].Url = fmt.Sprintf("http://%s/questions/%d/%s", request.Host, question.Id, question.Path)
+		calcPeriod(&questions[i])
 	}
 
 	tmpl := template.Must(template.ParseFiles("template/questions.html"))
-	_ = tmpl.Execute(writer, questions)
+	_ = tmpl.Execute(writer, QuestionsView{
+		Questions:         questions,
+		SortByRecently:    sort == "recently",
+		SortByInteresting: sort == "interesting",
+	})
+}
+
+func calcPeriod(question *Question) {
+	since := time.Since(question.AskedAt)
+	if since.Seconds() < 60 {
+		question.Since = fmt.Sprintf("%d seconds ago", int(since.Seconds()))
+	} else if since.Minutes() < 60 {
+		question.Since = fmt.Sprintf("%d minutes ago", int(since.Minutes()))
+	} else if since.Hours() < 24 {
+		question.Since = fmt.Sprintf("%d hours ago", int(since.Hours()))
+	} else if since.Hours()/24 < 30 {
+		question.Since = fmt.Sprintf("%d days ago", int(since.Hours()/24))
+	} else if since.Hours()/24/30 < 30 {
+		question.Since = fmt.Sprintf("%d months ago", int(since.Hours()/24/30))
+	} else {
+		question.Since = fmt.Sprintf("%d years ago", int(since.Hours()/24/30/12))
+	}
 }
 
 func ShowQuestion(writer http.ResponseWriter, request *http.Request) {
