@@ -17,19 +17,8 @@
     </nav>
   </header>
   <div class="container" style="margin-bottom: 1em;">
-    <a class="btn btn-primary float-right" href="ask">Ask Question</a>
-    <h3>Questions</h3>
-  </div>
-  <div class="container" style="height: 2em; margin-bottom: 1em;">
-    <div class="float-right">
-      {{ if .SortByRecently }}
-      <span style="margin-right: 12px;" href="/iwantoask/questions?sort=recently">recently</span>
-      <a href="/iwantoask/questions?sort=interesting">interesting</a>
-      {{ else if .SortByInteresting }}
-      <a style="margin-right: 12px;" href="/iwantoask/questions?sort=recently">recently</a>
-      <span href="/iwantoask/questions?sort=interesting">interesting</span>
-      {{ end }}
-    </div>
+    <a class="btn btn-primary float-right" href="ask">我要提问</a>
+    <h3>问题列表</h3>
   </div>
   <div id="app">
     <div class="container">
