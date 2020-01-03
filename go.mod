@@ -1,4 +1,4 @@
-module iwantoask
+module github.com/verils/iwantoask
 
 go 1.13
 

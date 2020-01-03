@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/gorilla/mux"
-	"iwantoask/app"
+	"github.com/verils/iwantoask/app"
 	"log"
 	"net/http"
 	"os"
