@@ -8,7 +8,27 @@ import (
 	"os"
 )
 
+const AppVersion = "0.1.1"
+
 func main() {
+	log.Printf("[INFO] iwantoask (iwantoask %s) starting...", AppVersion)
+
+	initializeEnvironment()
+
+	router := mux.NewRouter()
+
+	router.HandleFunc("/iwantoask/", app.ListQuestions).Methods(http.MethodGet)
+	router.HandleFunc("/iwantoask/questions", app.ListQuestions).Methods(http.MethodGet)
+	router.HandleFunc("/iwantoask/ask", app.AskQuestion).Methods(http.MethodGet)
+	router.HandleFunc("/iwantoask/ask", app.SubmitQuestion).Methods(http.MethodPost)
+
+	router.PathPrefix("/iwantoask/").Handler(http.StripPrefix("/iwantoask/", http.FileServer(http.Dir("static/"))))
+
+	log.Printf("[INFO] server started at port: %d", 8080)
+	_ = http.ListenAndServe(":8080", router)
+}
+
+func initializeEnvironment() {
 	if os.Getenv(app.MysqlHost) == "" {
 		defaultMysqlHost := "docker.local"
 		_ = os.Setenv(app.MysqlHost, defaultMysqlHost)
@@ -24,16 +44,4 @@ func main() {
 		_ = os.Setenv(app.MysqlPassword, defaultMysqlPassword)
 		log.Printf("[WARN] missing env %s, set default to '%s'", app.MysqlPassword, defaultMysqlPassword)
 	}
-
-	router := mux.NewRouter()
-
-	router.HandleFunc("/iwantoask/", app.ListQuestions).Methods(http.MethodGet)
-	router.HandleFunc("/iwantoask/questions", app.ListQuestions).Methods(http.MethodGet)
-	router.HandleFunc("/iwantoask/ask", app.AskQuestion).Methods(http.MethodGet)
-	router.HandleFunc("/iwantoask/ask", app.SubmitQuestion).Methods(http.MethodPost)
-
-	router.PathPrefix("/iwantoask/").Handler(http.StripPrefix("/iwantoask/", http.FileServer(http.Dir("static/"))))
-
-	log.Printf("[INFO] server started at port: %d", 8080)
-	_ = http.ListenAndServe(":8080", router)
 }
