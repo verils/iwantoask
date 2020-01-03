@@ -55,10 +55,6 @@ type ListQuestionsView struct {
 	SortByInteresting bool
 }
 
-type AskQuestionView struct {
-	BasePath string
-}
-
 func ListQuestions(writer http.ResponseWriter, request *http.Request) {
 	sort := request.FormValue("sort")
 	if sort == "" {
@@ -140,14 +136,38 @@ func calcPeriod(question *Question) {
 	}
 }
 
+type AskQuestionView struct {
+	BasePath    string
+	TitleError  string
+	DetailError string
+}
+
+func (view *AskQuestionView) HasError() bool {
+	return view.TitleError != "" || view.DetailError != ""
+}
+
 func AskQuestion(writer http.ResponseWriter, _ *http.Request) {
 	tmpl := template.Must(template.ParseFiles("template/ask.html"))
 	_ = tmpl.Execute(writer, AskQuestionView{BasePath: BasePath})
 }
 
 func SubmitQuestion(writer http.ResponseWriter, request *http.Request) {
+	view := AskQuestionView{BasePath: BasePath}
+
 	title := request.PostFormValue("title")
+	if title == "" {
+		view.TitleError = "请填写标题"
+	}
 	detail := request.PostFormValue("detail")
+	if detail == "" {
+		view.DetailError = "请填写描述"
+	}
+
+	if view.HasError() {
+		askTemplate := template.Must(template.ParseFiles("template/ask.html"))
+		_ = askTemplate.Execute(writer, view)
+		return
+	}
 
 	haikunate := haikunator.New()
 	haikunate.Delimiter = "_"
