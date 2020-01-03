@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <base href="{{ .BasePath }}/">
   <title>Iwantoask - Make something you want to know</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
@@ -13,11 +14,11 @@
 <body>
   <header style="margin-bottom: 1em;">
     <nav class="navbar navbar-light bg-light">
-      <a href="/iwantoask/" class="navbar-brand">Iwantoask</a>
+      <a href="./" class="navbar-brand">Iwantoask</a>
     </nav>
   </header>
   <div class="container" style="margin-bottom: 1em;">
-    <a class="btn btn-primary float-right" href="ask">我要提问</a>
+    <a class="btn btn-primary float-right" href="./ask">我要提问</a>
     <h3>问题列表</h3>
   </div>
   <div id="app">

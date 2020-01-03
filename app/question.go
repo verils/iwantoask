@@ -13,10 +13,6 @@ import (
 	"time"
 )
 
-const MysqlHost = "MYSQL_HOST"
-const MysqlUsername = "MYSQL_USERNAME"
-const MysqlPassword = "MYSQL_PASSWORD"
-
 type UserModel struct {
 	Username sql.NullString
 	Name     sql.NullString
@@ -52,10 +48,15 @@ type Question struct {
 	Since   string
 }
 
-type QuestionsView struct {
+type ListQuestionsView struct {
+	BasePath          string
 	Questions         []Question
 	SortByRecently    bool
 	SortByInteresting bool
+}
+
+type AskQuestionView struct {
+	BasePath string
 }
 
 func ListQuestions(writer http.ResponseWriter, request *http.Request) {
@@ -102,12 +103,13 @@ func ListQuestions(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	for i, question := range questions {
-		questions[i].Url = fmt.Sprintf("http://%s/questions/%d/%s", request.Host, question.Id, question.Path)
+		questions[i].Url = getUrl(request, question)
 		calcPeriod(&questions[i])
 	}
 
 	tmpl := template.Must(template.ParseFiles("template/questions.html"))
-	_ = tmpl.Execute(writer, QuestionsView{
+	_ = tmpl.Execute(writer, ListQuestionsView{
+		BasePath:          BasePath,
 		Questions:         questions,
 		SortByRecently:    sort == "recently",
 		SortByInteresting: sort == "interesting",
@@ -115,9 +117,9 @@ func ListQuestions(writer http.ResponseWriter, request *http.Request) {
 }
 
 func getMysqlConnection() (*sql.DB, error) {
-	mysqlHost := os.Getenv(MysqlHost)
-	mysqlUsername := os.Getenv(MysqlUsername)
-	mysqlPassword := os.Getenv(MysqlPassword)
+	mysqlHost := os.Getenv(EnvMysqlHost)
+	mysqlUsername := os.Getenv(EnvMysqlUsername)
+	mysqlPassword := os.Getenv(EnvMysqlPassword)
 	return sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/iwantoask?parseTime=true", mysqlUsername, mysqlPassword, mysqlHost))
 }
 
@@ -138,9 +140,9 @@ func calcPeriod(question *Question) {
 	}
 }
 
-func AskQuestion(writer http.ResponseWriter, request *http.Request) {
+func AskQuestion(writer http.ResponseWriter, _ *http.Request) {
 	tmpl := template.Must(template.ParseFiles("template/ask.html"))
-	_ = tmpl.Execute(writer, nil)
+	_ = tmpl.Execute(writer, AskQuestionView{BasePath: BasePath})
 }
 
 func SubmitQuestion(writer http.ResponseWriter, request *http.Request) {
@@ -188,12 +190,16 @@ func SubmitQuestion(writer http.ResponseWriter, request *http.Request) {
 
 	question.Id = int(lastInsertId)
 
+	question.Url = getUrl(request, question)
+
+	writer.Header().Set("Location", BasePathPrefix("/questions"))
+	writer.WriteHeader(http.StatusFound)
+}
+
+func getUrl(request *http.Request, question Question) string {
 	schema := "http"
 	if request.TLS != nil {
 		schema = "https"
 	}
-	question.Url = fmt.Sprintf("%s://%s/q/%d/%s", schema, request.Host, question.Id, question.Path)
-
-	writer.Header().Set("Location", "/iwantoask/questions")
-	writer.WriteHeader(http.StatusFound)
+	return fmt.Sprintf("%s://%s/%s/questions/%d/%s", schema, request.Host, BasePath, question.Id, question.Path)
 }
