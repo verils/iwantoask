@@ -1,73 +1,80 @@
 {{ define "list" }}
-<!DOCTYPE html>
-<html lang="en">
+  <!DOCTYPE html>
+  <html lang="en">
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <base href="{{ .BasePath }}/">
-  <title>Iwantoask - Make something you want to know</title>
-  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
-</head>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <base href="{{ .BasePath }}/">
+    <title>Iwantoask - Make something you want to know</title>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+  </head>
 
-<body>
-<header style="margin-bottom: 1em;">
-  <nav class="navbar navbar-light bg-light">
-    <a href="./" class="navbar-brand">Iwantoask</a>
-  </nav>
-</header>
-<div class="container" style="margin-bottom: 1em;">
-  <a class="btn btn-primary float-right" href="./ask">我要提问</a>
-  <h3>问题列表</h3>
-</div>
-<div class="container" style="margin-bottom: 1em">
-  <div class="list-group" style="margin-bottom: 1em">
-    {{ range .Questions }}
-      <div class="list-group-item list-group-item-action">
-        <div class="d-flex w-100 justify-content-between">
-          <h5 class="mb-1">{{ .Title }}</h5>
-          <small>{{ .Since }}</small>
-        </div>
-        <p class="mb-1">{{ .Detail }}</p>
-        <small>{{ .AskedBy.Name }}</small>
-      </div>
-    {{ end }}
+  <body>
+  <header style="margin-bottom: 1em;">
+    <nav class="navbar navbar-light bg-light">
+      <a href="./" class="navbar-brand">Iwantoask</a>
+    </nav>
+  </header>
+  <div class="container" style="margin-bottom: 1em;">
+    <a class="btn btn-primary float-right" href="./ask">我要提问</a>
+    <h3>问题列表</h3>
   </div>
-  <nav>
-    {{ if .Pagination.HasPages }}
-      <ul class="pagination justify-content-center">
-        {{ if .Pagination.HasPrev }}
-          <li class="page-item">
-            <a class="page-link" href="./questions?page={{ .Pagination.PagePrev }}">Previous</a>
-          </li>
-        {{ else }}
-          <li class="page-item disabled">
-            <span class="page-link">Previous</span>
-          </li>
-        {{ end }}
-        {{ range $index, $page := .Pagination.PageItems }}
-          {{ if isActive $page }}
-            <li class="page-item active">
-              <a class="page-link" href="./questions?page={{ $page }}">{{ $page }}</a>
+  <div class="container" style="margin-bottom: 1em">
+    <div class="list-group" style="margin-bottom: 1em">
+      {{ range .Questions }}
+        <div class="list-group-item list-group-item-action">
+          <div class="d-flex w-100 justify-content-between">
+            <h5 class="mb-1">{{ .Title }}</h5>
+            <small>{{ .Since }}</small>
+          </div>
+          <p class="mb-1">{{ .Detail }}</p>
+          <small>{{ .AskedBy.Name }}</small>
+        </div>
+      {{ end }}
+    </div>
+    <nav>
+      {{ if .Pagination.HasPages }}
+        {{ $pageSize := .Pagination.PageSize }}
+        <ul class="pagination justify-content-center">
+          {{ if .Pagination.HasPrev }}
+            <li class="page-item">
+              <a class="page-link"
+                 href="./questions?page={{ .Pagination.PagePrev }}&size={{ $pageSize }}">Previous</a>
             </li>
           {{ else }}
-            <li class="page-item">
-              <a class="page-link" href="./questions?page={{ $page }}">{{ $page }}</a>
+            <li class="page-item disabled">
+              <span class="page-link">Previous</span>
             </li>
           {{ end }}
-        {{ end }}
-        {{ if .Pagination.HasNext }}
-          <li class="page-item"><a class="page-link" href="./questions?page={{ .Pagination.PageNext }}">Next</a></li>
-        {{ else }}
-          <li class="page-item disabled"><span class="page-link">Next</span></li>
-        {{ end }}
-      </ul>
-    {{ end }}
-  </nav>
-</div>
-</body>
+          {{ range $index, $page := .Pagination.Pages }}
+            {{ if isActive $page }}
+              <li class="page-item active">
+                <a class="page-link"
+                   href="./questions?page={{ $page }}&size={{ $pageSize }}">{{ $page }}</a>
+              </li>
+            {{ else }}
+              <li class="page-item">
+                <a class="page-link"
+                   href="./questions?page={{ $page }}&size={{ $pageSize }}">{{ $page }}</a>
+              </li>
+            {{ end }}
+          {{ end }}
+          {{ if .Pagination.HasNext }}
+            <li class="page-item">
+              <a class="page-link"
+                 href="./questions?page={{ .Pagination.PageNext }}&size={{ $pageSize }}">Next</a>
+            </li>
+          {{ else }}
+            <li class="page-item disabled"><span class="page-link">Next</span></li>
+          {{ end }}
+        </ul>
+      {{ end }}
+    </nav>
+  </div>
+  </body>
 
-</html>
+  </html>
 {{ end }}
