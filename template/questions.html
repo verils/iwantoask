@@ -1,3 +1,4 @@
+{{ define "list" }}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -12,31 +13,61 @@
 </head>
 
 <body>
-  <header style="margin-bottom: 1em;">
-    <nav class="navbar navbar-light bg-light">
-      <a href="./" class="navbar-brand">Iwantoask</a>
-    </nav>
-  </header>
-  <div class="container" style="margin-bottom: 1em;">
-    <a class="btn btn-primary float-right" href="./ask">我要提问</a>
-    <h3>问题列表</h3>
-  </div>
-  <div id="app">
-    <div class="container">
-      <div class="list-group">
-        {{ range .Questions }}
-        <div class="list-group-item list-group-item-action">
-          <div class="d-flex w-100 justify-content-between">
-            <h5 class="mb-1">{{ .Title }}</h5>
-            <small>{{ .Since }}</small>
-          </div>
-          <p class="mb-1">{{ .Detail }}</p>
-          <small>{{ .AskedBy.Name }}</small>
+<header style="margin-bottom: 1em;">
+  <nav class="navbar navbar-light bg-light">
+    <a href="./" class="navbar-brand">Iwantoask</a>
+  </nav>
+</header>
+<div class="container" style="margin-bottom: 1em;">
+  <a class="btn btn-primary float-right" href="./ask">我要提问</a>
+  <h3>问题列表</h3>
+</div>
+<div class="container" style="margin-bottom: 1em">
+  <div class="list-group" style="margin-bottom: 1em">
+    {{ range .Questions }}
+      <div class="list-group-item list-group-item-action">
+        <div class="d-flex w-100 justify-content-between">
+          <h5 class="mb-1">{{ .Title }}</h5>
+          <small>{{ .Since }}</small>
         </div>
-        {{ end }}
+        <p class="mb-1">{{ .Detail }}</p>
+        <small>{{ .AskedBy.Name }}</small>
       </div>
-    </div>
+    {{ end }}
   </div>
+  <nav>
+    {{ if .Pagination.HasPages }}
+      <ul class="pagination justify-content-center">
+        {{ if .Pagination.HasPrev }}
+          <li class="page-item">
+            <a class="page-link" href="./questions?page={{ .Pagination.PagePrev }}">Previous</a>
+          </li>
+        {{ else }}
+          <li class="page-item disabled">
+            <span class="page-link">Previous</span>
+          </li>
+        {{ end }}
+        {{ range $index, $page := .Pagination.PageItems }}
+          {{ if isActive $page }}
+            <li class="page-item active">
+              <a class="page-link" href="./questions?page={{ $page }}">{{ $page }}</a>
+            </li>
+          {{ else }}
+            <li class="page-item">
+              <a class="page-link" href="./questions?page={{ $page }}">{{ $page }}</a>
+            </li>
+          {{ end }}
+        {{ end }}
+        {{ if .Pagination.HasNext }}
+          <li class="page-item"><a class="page-link" href="./questions?page={{ .Pagination.PageNext }}">Next</a></li>
+        {{ else }}
+          <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {{ end }}
+      </ul>
+    {{ end }}
+  </nav>
+</div>
 </body>
 
 </html>
+{{ end }}
