@@ -43,7 +43,6 @@ type Question struct {
 	Title   string
 	Detail  string
 	Path    string
-	Url     string
 	AskedAt time.Time
 	AskedBy User
 	Since   string
@@ -159,8 +158,7 @@ func ListQuestions(writer http.ResponseWriter, request *http.Request) {
 		questions = append(questions, question)
 	}
 
-	for i, question := range questions {
-		questions[i].Url = getUrl(request, question)
+	for i := range questions {
 		calcPeriod(&questions[i])
 	}
 
@@ -222,7 +220,6 @@ func SubmitQuestion(writer http.ResponseWriter, request *http.Request) {
 		Title:   title,
 		Detail:  detail,
 		Path:    path,
-		Url:     "",
 		AskedAt: time.Now(),
 		AskedBy: User{
 			Username: username,
@@ -252,8 +249,6 @@ func SubmitQuestion(writer http.ResponseWriter, request *http.Request) {
 
 	question.Id = int(lastInsertId)
 
-	question.Url = getUrl(request, question)
-
 	writer.Header().Set("Location", BasePathPrefix("/questions"))
 	writer.WriteHeader(http.StatusFound)
 }
@@ -263,14 +258,6 @@ func getMysqlConnection() (*sql.DB, error) {
 	mysqlUsername := os.Getenv(EnvMysqlUsername)
 	mysqlPassword := os.Getenv(EnvMysqlPassword)
 	return sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/iwantoask?parseTime=true", mysqlUsername, mysqlPassword, mysqlHost))
-}
-
-func getUrl(request *http.Request, question Question) string {
-	schema := "http"
-	if request.TLS != nil {
-		schema = "https"
-	}
-	return fmt.Sprintf("%s://%s/%s/questions/%d/%s", schema, request.Host, BasePath, question.Id, question.Path)
 }
 
 func calcPeriod(question *Question) {
