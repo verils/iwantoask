@@ -58,43 +58,31 @@ func NewHandler(db *bolt.DB) *Handler {
 }
 
 func (handler *Handler) ListQuestions(writer http.ResponseWriter, request *http.Request) {
-	page := 1
-	pageParam := request.FormValue("page")
-	if pageParam != "" {
-		pageValue, err := strconv.Atoi(pageParam)
-		if err != nil {
-			message := fmt.Sprintf("cannot parse param 'page' to int")
-			http.Error(writer, message, http.StatusBadRequest)
-			return
-		}
-		if pageValue < 1 {
-			message := fmt.Sprintf("'page' cannot be < 1")
-			http.Error(writer, message, http.StatusBadRequest)
-			return
-		}
-		page = pageValue
+	pageValue := FormValueOrDefault(request, "page", "1")
+	page, err := strconv.Atoi(pageValue)
+	if err != nil {
+		http.Error(writer, fmt.Sprintf("cannot parse param 'page' to int"), http.StatusBadRequest)
+		return
+	}
+	if page < 1 {
+		http.Error(writer, fmt.Sprintf("'page' cannot be < 1"), http.StatusBadRequest)
+		return
 	}
 
-	size := 5
-	sizeParam := request.FormValue("size")
-	if sizeParam != "" {
-		sizeValue, err := strconv.Atoi(sizeParam)
-		if err != nil {
-			message := fmt.Sprintf("cannot parse param 'size' to int")
-			http.Error(writer, message, http.StatusBadRequest)
-			return
-		}
-		if sizeValue < 0 {
-			message := fmt.Sprintf("'size' cannot be < 0")
-			http.Error(writer, message, http.StatusBadRequest)
-			return
-		}
-		size = sizeValue
+	sizeValue := FormValueOrDefault(request, "size", "10")
+	size, err := strconv.Atoi(sizeValue)
+	if err != nil {
+		http.Error(writer, fmt.Sprintf("cannot parse param 'size' to int"), http.StatusBadRequest)
+		return
+	}
+	if size < 0 {
+		http.Error(writer, fmt.Sprintf("'size' cannot be < 0"), http.StatusBadRequest)
+		return
 	}
 
 	allQuestions := make([]Question, 0)
 
-	err := handler.db.View(func(tx *bolt.Tx) error {
+	err = handler.db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(BucketQuestions))
 		cursor := bucket.Cursor()
 
