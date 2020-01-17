@@ -98,8 +98,8 @@ func (handler *Handler) ListQuestions(writer http.ResponseWriter, request *http.
 		bucket := tx.Bucket([]byte(BucketQuestions))
 		cursor := bucket.Cursor()
 
-		var question Question
 		for k, v := cursor.Last(); k != nil; k, v = cursor.Prev() {
+			var question Question
 			err := json.Unmarshal(v, &question)
 			if err != nil {
 				return err
@@ -153,8 +153,8 @@ func (handler *Handler) ListQuestionsJson(writer http.ResponseWriter, _ *http.Re
 		bucket := tx.Bucket([]byte(BucketQuestions))
 		cursor := bucket.Cursor()
 
-		var question Question
 		for k, v := cursor.First(); k != nil; k, v = cursor.Next() {
+			var question Question
 			err := json.Unmarshal(v, &question)
 			if err != nil {
 				return err
