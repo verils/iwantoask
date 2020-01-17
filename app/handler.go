@@ -61,22 +61,22 @@ func (handler *Handler) ListQuestions(writer http.ResponseWriter, request *http.
 	pageValue := FormValueOrDefault(request, "page", "1")
 	page, err := strconv.Atoi(pageValue)
 	if err != nil {
-		http.Error(writer, fmt.Sprintf("cannot parse param 'page' to int"), http.StatusBadRequest)
+		http.Error(writer, "cannot parse param 'page' to int", http.StatusBadRequest)
 		return
 	}
 	if page < 1 {
-		http.Error(writer, fmt.Sprintf("'page' cannot be < 1"), http.StatusBadRequest)
+		http.Error(writer, "'page' cannot be < 1", http.StatusBadRequest)
 		return
 	}
 
 	sizeValue := FormValueOrDefault(request, "size", "10")
 	size, err := strconv.Atoi(sizeValue)
 	if err != nil {
-		http.Error(writer, fmt.Sprintf("cannot parse param 'size' to int"), http.StatusBadRequest)
+		http.Error(writer, "cannot parse param 'size' to int", http.StatusBadRequest)
 		return
 	}
 	if size < 0 {
-		http.Error(writer, fmt.Sprintf("'size' cannot be < 0"), http.StatusBadRequest)
+		http.Error(writer, "'size' cannot be < 0", http.StatusBadRequest)
 		return
 	}
 
