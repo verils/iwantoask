@@ -1,51 +1,34 @@
 package app
 
 import (
-	"database/sql"
+	"encoding/binary"
+	"encoding/json"
 	"fmt"
-	"github.com/atrox/haikunatorgo/v2"
-	_ "github.com/go-sql-driver/mysql"
+	haikunator "github.com/atrox/haikunatorgo/v2"
+	"github.com/boltdb/bolt"
 	"html/template"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 )
 
-type UserModel struct {
-	Username sql.NullString
-	Name     sql.NullString
-}
-
-func (userModel *UserModel) GetUsernameOrDefault(value string) string {
-	if userModel.Username.Valid {
-		return userModel.Username.String
-	}
-	return value
-}
-
-func (userModel *UserModel) GetNameOrDefault(value string) string {
-	if userModel.Name.Valid {
-		return userModel.Name.String
-	}
-	return value
-}
+const BucketQuestions = "questions"
 
 type User struct {
-	Username string
-	Name     string
+	Username string `json:"username"`
+	Name     string `json:"name"`
 }
 
 type Question struct {
-	Id      int
-	Title   string
-	Detail  string
-	Path    string
-	AskedAt time.Time
-	AskedBy User
-	Since   string
+	Id      int       `json:"id"`
+	Title   string    `json:"title"`
+	Detail  string    `json:"detail"`
+	Path    string    `json:"path"`
+	AskedAt time.Time `json:"asked_at"`
+	AskedBy User      `json:"asked_by"`
+	Since   string    `json:"since,omitempty"`
 }
 
 type ListQuestionsView struct {
@@ -66,12 +49,15 @@ func (view *AskQuestionView) HasError() bool {
 	return view.TitleError != "" || view.DetailError != ""
 }
 
-func ListQuestions(writer http.ResponseWriter, request *http.Request) {
-	sort := request.FormValue("sort")
-	if sort == "" {
-		sort = "recently"
-	}
+type Handler struct {
+	db *bolt.DB
+}
 
+func NewHandler(db *bolt.DB) *Handler {
+	return &Handler{db}
+}
+
+func (handler *Handler) ListQuestions(writer http.ResponseWriter, request *http.Request) {
 	page := 1
 	pageParam := request.FormValue("page")
 	if pageParam != "" {
@@ -106,70 +92,46 @@ func ListQuestions(writer http.ResponseWriter, request *http.Request) {
 		size = sizeValue
 	}
 
-	db, err := getMysqlConnection()
+	allQuestions := make([]Question, 0)
+
+	err := handler.db.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(BucketQuestions))
+		cursor := bucket.Cursor()
+
+		for k, v := cursor.Last(); k != nil; k, v = cursor.Prev() {
+			var question Question
+			err := json.Unmarshal(v, &question)
+			if err != nil {
+				return err
+			}
+			allQuestions = append(allQuestions, question)
+		}
+		return nil
+	})
+
 	if err != nil {
-		message := fmt.Sprintf("cannot connect to database: %s", err.Error())
+		message := fmt.Sprintf("list error: %s", err.Error())
 		log.Printf("[ERROR]: %s", message)
 		http.Error(writer, message, http.StatusInternalServerError)
 		return
 	}
-	defer db.Close()
+
+	total := len(allQuestions)
 
 	start := (page - 1) * size
-	rows, err := db.Query(
-		`SELECT q.id, q.path, q.title, q.detail, q.asked_at, q.asked_by, u.name
-				FROM questions q LEFT JOIN users u ON q.asked_by = u.username 
-				ORDER BY q.asked_at DESC
-				LIMIT ?, ?`,
-		start, size,
-	)
-	if err != nil {
-		message := fmt.Sprintf("cannot fetch questions: %s", err.Error())
-		log.Printf("[ERROR]: %s", message)
-		http.Error(writer, message, http.StatusInternalServerError)
-		return
+	if start > total {
+		start = total
 	}
 
-	questions := make([]Question, 0)
-	for rows.Next() {
-		var question Question
-		var userModel UserModel
-
-		err = rows.Scan(
-			&question.Id,
-			&question.Path,
-			&question.Title,
-			&question.Detail,
-			&question.AskedAt,
-			&userModel.Username,
-			&userModel.Name,
-		)
-		if err != nil {
-			message := fmt.Sprintf("scan error: %s", err.Error())
-			log.Printf("[ERROR]: %s", message)
-			http.Error(writer, message, http.StatusInternalServerError)
-			return
-		}
-
-		question.AskedBy = User{
-			Username: userModel.GetUsernameOrDefault("anonymous"),
-			Name:     userModel.GetNameOrDefault("anonymous"),
-		}
-		questions = append(questions, question)
+	end := page * size
+	if end > total {
+		end = total
 	}
+
+	questions := allQuestions[start:end]
 
 	for i := range questions {
 		calcPeriod(&questions[i])
-	}
-
-	total := 0
-	row := db.QueryRow("SELECT COUNT(*) FROM questions")
-	err = row.Scan(&total)
-	if err != nil {
-		message := fmt.Sprintf("cannot get count of questions: %s", err.Error())
-		log.Printf("[ERROR]: %s", message)
-		http.Error(writer, message, http.StatusInternalServerError)
-		return
 	}
 
 	pagination := NewPagination(page, size, total)
@@ -178,20 +140,46 @@ func ListQuestions(writer http.ResponseWriter, request *http.Request) {
 	funcMap := template.FuncMap{"isActive": pagination.IsActive}
 	tmpl := template.Must(template.New("list").Funcs(funcMap).ParseFiles("template/questions.html"))
 	_ = tmpl.ExecuteTemplate(writer, "list", ListQuestionsView{
-		BasePath:          BasePath,
-		Questions:         questions,
-		SortByRecently:    sort == "recently",
-		SortByInteresting: sort == "interesting",
-		Pagination:        *pagination,
+		BasePath:   BasePath,
+		Questions:  questions,
+		Pagination: *pagination,
 	})
 }
 
-func AskQuestion(writer http.ResponseWriter, _ *http.Request) {
+func (handler *Handler) ListQuestionsJson(writer http.ResponseWriter, _ *http.Request) {
+	allQuestions := make([]Question, 0)
+
+	err := handler.db.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(BucketQuestions))
+		cursor := bucket.Cursor()
+
+		for k, v := cursor.First(); k != nil; k, v = cursor.Next() {
+			var question Question
+			err := json.Unmarshal(v, &question)
+			if err != nil {
+				return err
+			}
+			allQuestions = append(allQuestions, question)
+		}
+		return nil
+	})
+
+	if err != nil {
+		message := fmt.Sprintf("{\"message\": \"list error: %s\"}", err.Error())
+		log.Printf("[ERROR]: %s", message)
+		http.Error(writer, message, http.StatusInternalServerError)
+		return
+	}
+
+	_ = json.NewEncoder(writer).Encode(allQuestions)
+}
+
+func (handler *Handler) AskQuestion(writer http.ResponseWriter, _ *http.Request) {
 	tmpl := template.Must(template.ParseFiles("template/ask.html"))
 	_ = tmpl.Execute(writer, AskQuestionView{BasePath: BasePath})
 }
 
-func SubmitQuestion(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) SubmitQuestion(writer http.ResponseWriter, request *http.Request) {
 	view := AskQuestionView{BasePath: BasePath}
 
 	title := request.PostFormValue("title")
@@ -228,36 +216,38 @@ func SubmitQuestion(writer http.ResponseWriter, request *http.Request) {
 		Since: "",
 	}
 
-	db, err := getMysqlConnection()
-	if err != nil {
-		message := fmt.Sprintf("cannot connect to database: %s", err.Error())
-		log.Printf("[ERROR]: %s", message)
-		http.Error(writer, message, http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
+	err := handler.db.Update(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(BucketQuestions))
+		sequence, _ := bucket.NextSequence()
 
-	result, err := db.Exec("INSERT INTO questions (path, title, detail, asked_at, asked_by) VALUES (?, ?, ?, ?, ?)",
-		question.Path, question.Title, question.Detail, question.AskedAt, question.AskedBy.Username)
+		question.Id = int(sequence)
+
+		bytes := itob(question.Id)
+		data, err := json.Marshal(question)
+		if err != nil {
+			return err
+		}
+
+		return bucket.Put(bytes, data)
+	})
+
 	if err != nil {
 		message := fmt.Sprintf("an error happened when accessing the resources: %s", err.Error())
 		log.Printf("[ERROR]: %s", message)
 		http.Error(writer, message, http.StatusInternalServerError)
 		return
 	}
-	lastInsertId, _ := result.LastInsertId()
 
-	question.Id = int(lastInsertId)
+	log.Printf("[DEBUG] added question: %s", question.Title)
 
 	writer.Header().Set("Location", BasePathPrefix("/questions"))
 	writer.WriteHeader(http.StatusFound)
 }
 
-func getMysqlConnection() (*sql.DB, error) {
-	mysqlHost := os.Getenv(EnvMysqlHost)
-	mysqlUsername := os.Getenv(EnvMysqlUsername)
-	mysqlPassword := os.Getenv(EnvMysqlPassword)
-	return sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/iwantoask?parseTime=true", mysqlUsername, mysqlPassword, mysqlHost))
+func itob(id int) []byte {
+	bytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(bytes, uint64(id))
+	return bytes
 }
 
 func calcPeriod(question *Question) {

@@ -1,25 +1,35 @@
 package main
 
 import (
+	"github.com/boltdb/bolt"
+	"github.com/boltdb/boltd"
 	"github.com/gorilla/mux"
 	"github.com/verils/iwantoask/app"
 	"log"
 	"net/http"
-	"os"
+	"time"
 )
 
-func main() {
-	log.Printf("[INFO] iwantoask (iwantoask-%s) starting...", app.Version)
-	log.Printf("[INFO] iwantoask web base path: '%s'", app.BasePath)
+const Version = "0.1.3"
 
-	initializeEnvironment()
+func main() {
+	log.Printf("[INFO] iwantoask (iwantoask-%s) starting...", Version)
+	log.Printf("[INFO] iwantoask base path: '%s'", app.BasePath)
+
+	db := initDB()
+	defer db.Close()
+
+	handler := app.NewHandler(db)
 
 	router := mux.NewRouter()
 
-	router.HandleFunc(app.BasePathPrefix("/"), app.ListQuestions).Methods(http.MethodGet)
-	router.HandleFunc(app.BasePathPrefix("/questions"), app.ListQuestions).Methods(http.MethodGet)
-	router.HandleFunc(app.BasePathPrefix("/ask"), app.AskQuestion).Methods(http.MethodGet)
-	router.HandleFunc(app.BasePathPrefix("/ask"), app.SubmitQuestion).Methods(http.MethodPost)
+	router.Path(app.BasePathPrefix("/introspect")).Handler(boltd.NewHandler(db)).Methods(http.MethodGet)
+
+	router.HandleFunc(app.BasePathPrefix("/"), handler.ListQuestions).Methods(http.MethodGet)
+	router.HandleFunc(app.BasePathPrefix("/questions"), handler.ListQuestions).Methods(http.MethodGet)
+	router.HandleFunc(app.BasePathPrefix("/questions.json"), handler.ListQuestionsJson).Methods(http.MethodGet)
+	router.HandleFunc(app.BasePathPrefix("/ask"), handler.AskQuestion).Methods(http.MethodGet)
+	router.HandleFunc(app.BasePathPrefix("/ask"), handler.SubmitQuestion).Methods(http.MethodPost)
 
 	router.PathPrefix(app.BasePathPrefix("/")).Handler(http.StripPrefix(app.BasePathPrefix("/"), http.FileServer(http.Dir("static/"))))
 
@@ -27,20 +37,19 @@ func main() {
 	_ = http.ListenAndServe(":8080", router)
 }
 
-func initializeEnvironment() {
-	if os.Getenv(app.EnvMysqlHost) == "" {
-		defaultMysqlHost := "docker.local"
-		_ = os.Setenv(app.EnvMysqlHost, defaultMysqlHost)
-		log.Printf("[WARN] missing env %s, set default to '%s'", app.EnvMysqlHost, defaultMysqlHost)
+func initDB() *bolt.DB {
+	db, err := bolt.Open("iwantoask.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
+	if err != nil {
+		log.Fatalf("[ERROR] failed to open database: %s", err.Error())
 	}
-	if os.Getenv(app.EnvMysqlUsername) == "" {
-		defaultMysqlUsername := "root"
-		_ = os.Setenv(app.EnvMysqlUsername, defaultMysqlUsername)
-		log.Printf("[WARN] missing env %s, set default to '%s'", app.EnvMysqlUsername, defaultMysqlUsername)
+
+	err = db.Update(func(tx *bolt.Tx) error {
+		_, e := tx.CreateBucketIfNotExists([]byte(app.BucketQuestions))
+		return e
+	})
+	if err != nil {
+		log.Fatalf("[ERROR] failed to create bucket: %s", err.Error())
 	}
-	if os.Getenv(app.EnvMysqlPassword) == "" {
-		defaultMysqlPassword := ""
-		_ = os.Setenv(app.EnvMysqlPassword, defaultMysqlPassword)
-		log.Printf("[WARN] missing env %s, set default to '%s'", app.EnvMysqlPassword, defaultMysqlPassword)
-	}
+
+	return db
 }

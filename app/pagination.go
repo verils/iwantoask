@@ -18,7 +18,7 @@ func NewPagination(page int, size int, total int) *Pagination {
 }
 
 func (p *Pagination) Prepare() {
-	p.PageCount = p.Total/p.PageSize + 1
+	p.PageCount = (p.Total-1)/p.PageSize + 1
 	if p.PageCount > 1 {
 		p.HasPages = true
 	}

@@ -2,15 +2,7 @@ package app
 
 import "os"
 
-const (
-	Version = "0.1.2"
-
-	EnvBasePath = "WEB_BASE_PATH"
-
-	EnvMysqlHost     = "MYSQL_HOST"
-	EnvMysqlUsername = "MYSQL_USERNAME"
-	EnvMysqlPassword = "MYSQL_PASSWORD"
-)
+const EnvBasePath = "BASE_PATH"
 
 var BasePath = os.Getenv(EnvBasePath)
 
