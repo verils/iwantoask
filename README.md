@@ -10,7 +10,7 @@ docker pull verils/iwantoask
 docker run --name iwantoask -p 8080:8080 -d verils/iwantoask
 ```
 
-### TODO
+### Todos
 - [x] 启动时显示版本号
 - [x] 支持BaseUrl在环境变量配置（包括HTML和Go代码）
 - [x] 使用CI进行构建（GitHub Actions）
