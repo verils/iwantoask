@@ -31,4 +31,6 @@ jobs:
       run: docker build -t verils/iwantoask .
     
     - name: Push Image
-      run: docker push verils/iwantoask
+      run: |
+        docker login -u verils -p ${{ secrets.DOCKERHUB_PASSWORD }}
+        docker push verils/iwantoask
