@@ -28,7 +28,9 @@ jobs:
       run: go build -v .
     
     - name: Build Image
-      run: docker build -t verils/iwantoask .
+      run: |
+        chmod +x iwantoask
+        docker build -t verils/iwantoask .
     
     - name: Push Image
       run: |
