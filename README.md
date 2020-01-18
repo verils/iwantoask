@@ -1,5 +1,7 @@
 # Iwantoask
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=verils_iwantoask&metric=alert_status)](https://sonarcloud.io/dashboard?id=verils_iwantoask)
+
 ### How to run
 
 ```shell script
