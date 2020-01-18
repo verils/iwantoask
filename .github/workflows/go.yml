@@ -1,8 +1,6 @@
 name: Go
-on:
-  release:
-    types: [created]
-
+on: [push]
+    
 jobs:
   build:
     name: Build
@@ -28,13 +26,3 @@ jobs:
 
     - name: Build
       run: go build -v .
-    
-    - name: Build Image
-      run: |
-        chmod +x iwantoask
-        docker build -t verils/iwantoask:${{ GITHUB_REF }} .
-    
-    - name: Push Image
-      run: |
-        docker login -u verils -p ${{ secrets.DOCKERHUB_PASSWORD }}
-        docker push verils/iwantoask:${{ GITHUB_REF }}
