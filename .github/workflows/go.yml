@@ -5,9 +5,6 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    env:
-      DOCKERHUB_USERNAME: verils
-      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
     steps:
 
     - name: Set up Go 1.13
@@ -31,7 +28,4 @@ jobs:
       run: go build -v .
     
     - name: Build Image
-      uses: buildtool/build-action@v1
-    
-    - name: Push Image
-      uses: buildtool/push-action@v1
+      run: docker info && docker build .
