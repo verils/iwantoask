@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/boltdb/bolt"
-	"github.com/boltdb/boltd"
 	"github.com/gorilla/mux"
 	"github.com/verils/iwantoask/app"
 	"log"
@@ -22,8 +21,6 @@ func main() {
 	handler := app.NewHandler(db)
 
 	router := mux.NewRouter()
-
-	router.Path(app.BasePathPrefix("/introspect")).Handler(boltd.NewHandler(db)).Methods(http.MethodGet)
 
 	router.HandleFunc(app.BasePathPrefix("/"), handler.ListQuestions).Methods(http.MethodGet)
 	router.HandleFunc(app.BasePathPrefix("/questions"), handler.ListQuestions).Methods(http.MethodGet)
