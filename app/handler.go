@@ -39,13 +39,14 @@ type ListQuestionsView struct {
 }
 
 type AskQuestionView struct {
-	BasePath    string
-	TitleError  string
-	DetailError string
+	BasePath   string
+	Title      string
+	TitleError string
+	Detail     string
 }
 
 func (view *AskQuestionView) HasError() bool {
-	return view.TitleError != "" || view.DetailError != ""
+	return view.TitleError != ""
 }
 
 type QuestionHandler struct {
@@ -169,13 +170,13 @@ func (handler *QuestionHandler) SubmitQuestion(writer http.ResponseWriter, reque
 	view := AskQuestionView{BasePath: BasePath}
 
 	title := request.PostFormValue("title")
+	view.Title = title
 	if title == "" {
 		view.TitleError = "请填写标题"
 	}
+
 	detail := request.PostFormValue("detail")
-	if detail == "" {
-		view.DetailError = "请填写描述"
-	}
+	view.Detail = detail
 
 	if view.HasError() {
 		askTemplate := template.Must(template.ParseFiles("template/ask.html"))

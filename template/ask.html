@@ -22,7 +22,7 @@
     <div class="form-group">
       <label for="title">主题</label>
       {{ if .TitleError }}
-        <input type="text" class="form-control is-invalid" id="title" name="title">
+        <input type="text" class="form-control is-invalid" id="title" name="title" value="{{ .Title }}">
         <small class="invalid-feedback">{{ .TitleError }}</small>
       {{ else }}
         <input type="text" class="form-control" id="title" name="title">
@@ -31,13 +31,7 @@
     </div>
     <div class="form-group">
       <label for="detail">描述</label>
-      {{ if .DetailError }}
-        <textarea class="form-control is-invalid" id="detail" name="detail" rows="10"></textarea>
-        <small class="invalid-feedback">{{ .DetailError }}</small>
-      {{ else }}
-        <textarea class="form-control" id="detail" name="detail" rows="10"></textarea>
-        <small id="emailHelp" class="form-text text-muted">建议使用5W1H原则提问哦 ('5W1H'是指：Who, What, When, Where, Why, How, 代表问题的核心关键组成部分)</small>
-      {{ end }}
+      <textarea class="form-control" id="detail" name="detail" rows="10">{{ .Detail }}</textarea>
     </div>
     <button type="submit" class="btn btn-primary">提交</button>
     <a href="./" class="btn btn-outline-primary">返回</a>
