@@ -1,10 +1,12 @@
 root = true
 
+[*]
+insert_final_newline = true
+
 [*.html]
 charset = utf-8
 end_of_line = crlf
 indent_size = 2
 indent_style = space
-insert_final_newline = false
 max_line_length = 120
 tab_width = 2
