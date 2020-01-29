@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const Version = "0.1.3"
+const Version = "0.1.0"
 
 func main() {
 	log.Printf("[INFO] iwantoask (iwantoask-%s) starting...", Version)
