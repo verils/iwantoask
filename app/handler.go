@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	haikunator "github.com/atrox/haikunatorgo/v2"
 	"github.com/boltdb/bolt"
 	"html/template"
 	"log"
@@ -49,15 +48,15 @@ func (view *AskQuestionView) HasError() bool {
 	return view.TitleError != "" || view.DetailError != ""
 }
 
-type Handler struct {
+type QuestionHandler struct {
 	db *bolt.DB
 }
 
-func NewHandler(db *bolt.DB) *Handler {
-	return &Handler{db}
+func NewQuestionHandler(db *bolt.DB) *QuestionHandler {
+	return &QuestionHandler{db}
 }
 
-func (handler *Handler) ListQuestions(writer http.ResponseWriter, request *http.Request) {
+func (handler *QuestionHandler) ListQuestions(writer http.ResponseWriter, request *http.Request) {
 	pageValue := FormValueOrDefault(request, "page", "1")
 	page, err := strconv.Atoi(pageValue)
 	if err != nil {
@@ -123,7 +122,6 @@ func (handler *Handler) ListQuestions(writer http.ResponseWriter, request *http.
 	}
 
 	pagination := NewPagination(page, size, total)
-	pagination.Prepare()
 
 	funcMap := template.FuncMap{"isActive": pagination.IsActive}
 	tmpl := template.Must(template.New("list").Funcs(funcMap).ParseFiles("template/questions.html"))
@@ -134,7 +132,7 @@ func (handler *Handler) ListQuestions(writer http.ResponseWriter, request *http.
 	})
 }
 
-func (handler *Handler) ListQuestionsJson(writer http.ResponseWriter, _ *http.Request) {
+func (handler *QuestionHandler) ListQuestionsJson(writer http.ResponseWriter, _ *http.Request) {
 	allQuestions := make([]Question, 0)
 
 	err := handler.db.View(func(tx *bolt.Tx) error {
@@ -162,12 +160,12 @@ func (handler *Handler) ListQuestionsJson(writer http.ResponseWriter, _ *http.Re
 	_ = json.NewEncoder(writer).Encode(allQuestions)
 }
 
-func (handler *Handler) AskQuestion(writer http.ResponseWriter, _ *http.Request) {
+func (handler *QuestionHandler) AskQuestion(writer http.ResponseWriter, _ *http.Request) {
 	tmpl := template.Must(template.ParseFiles("template/ask.html"))
 	_ = tmpl.Execute(writer, AskQuestionView{BasePath: BasePath})
 }
 
-func (handler *Handler) SubmitQuestion(writer http.ResponseWriter, request *http.Request) {
+func (handler *QuestionHandler) SubmitQuestion(writer http.ResponseWriter, request *http.Request) {
 	view := AskQuestionView{BasePath: BasePath}
 
 	title := request.PostFormValue("title")
@@ -185,10 +183,7 @@ func (handler *Handler) SubmitQuestion(writer http.ResponseWriter, request *http
 		return
 	}
 
-	haikunate := haikunator.New()
-	haikunate.Delimiter = "_"
-	haikunate.TokenLength = 0
-	username := haikunate.Haikunate()
+	cookie, _ := request.Cookie(CookieUname)
 
 	path := strings.ReplaceAll(strings.ToLower(title), " ", "+")
 
@@ -198,8 +193,8 @@ func (handler *Handler) SubmitQuestion(writer http.ResponseWriter, request *http
 		Path:    path,
 		AskedAt: time.Now(),
 		AskedBy: User{
-			Username: username,
-			Name:     strings.ReplaceAll(username, "_", " "),
+			Username: "",
+			Name:     cookie.Value,
 		},
 		Since: "",
 	}
@@ -228,7 +223,7 @@ func (handler *Handler) SubmitQuestion(writer http.ResponseWriter, request *http
 
 	log.Printf("[DEBUG] added question: %s", question.Title)
 
-	writer.Header().Set("Location", BasePathPrefix("/questions"))
+	writer.Header().Set("Location", PrefixBasePath("/questions"))
 	writer.WriteHeader(http.StatusFound)
 }
 
