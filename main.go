@@ -18,17 +18,17 @@ func main() {
 	db := initDB()
 	defer db.Close()
 
-	handler := app.NewHandler(db)
+	handler := app.NewQuestionHandler(db)
 
 	router := mux.NewRouter()
 
-	router.HandleFunc(app.BasePathPrefix("/"), handler.ListQuestions).Methods(http.MethodGet)
-	router.HandleFunc(app.BasePathPrefix("/questions"), handler.ListQuestions).Methods(http.MethodGet)
-	router.HandleFunc(app.BasePathPrefix("/questions.json"), handler.ListQuestionsJson).Methods(http.MethodGet)
-	router.HandleFunc(app.BasePathPrefix("/ask"), handler.AskQuestion).Methods(http.MethodGet)
-	router.HandleFunc(app.BasePathPrefix("/ask"), handler.SubmitQuestion).Methods(http.MethodPost)
+	router.HandleFunc(app.PrefixBasePath("/"), app.CookieAuth(handler.ListQuestions)).Methods(http.MethodGet)
+	router.HandleFunc(app.PrefixBasePath("/questions"), app.CookieAuth(handler.ListQuestions)).Methods(http.MethodGet)
+	router.HandleFunc(app.PrefixBasePath("/questions.json"), app.CookieAuth(handler.ListQuestionsJson)).Methods(http.MethodGet)
+	router.HandleFunc(app.PrefixBasePath("/ask"), app.CookieAuth(handler.AskQuestion)).Methods(http.MethodGet)
+	router.HandleFunc(app.PrefixBasePath("/ask"), app.CookieAuth(handler.SubmitQuestion)).Methods(http.MethodPost)
 
-	router.PathPrefix(app.BasePathPrefix("/")).Handler(http.StripPrefix(app.BasePathPrefix("/"), http.FileServer(http.Dir("static/"))))
+	router.PathPrefix(app.PrefixBasePath("/")).Handler(http.StripPrefix(app.PrefixBasePath("/"), http.FileServer(http.Dir("static/"))))
 
 	log.Printf("[INFO] server started at port: %d", 8080)
 	_ = http.ListenAndServe(":8080", router)

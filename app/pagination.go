@@ -14,10 +14,12 @@ type Pagination struct {
 }
 
 func NewPagination(page int, size int, total int) *Pagination {
-	return &Pagination{Page: page, PageSize: size, Total: total}
+	pagination := &Pagination{Page: page, PageSize: size, Total: total}
+	pagination.prepare()
+	return pagination
 }
 
-func (p *Pagination) Prepare() {
+func (p *Pagination) prepare() {
 	p.PageCount = (p.Total-1)/p.PageSize + 1
 	if p.PageCount > 1 {
 		p.HasPages = true
