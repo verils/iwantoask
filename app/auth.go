@@ -3,6 +3,7 @@ package app
 import (
 	haikunator "github.com/atrox/haikunatorgo/v2"
 	"net/http"
+	"strings"
 )
 
 const CookieUname = "u_name"
@@ -19,7 +20,7 @@ func CookieAuth(f http.HandlerFunc) http.HandlerFunc {
 			haikunate.Delimiter = " "
 			haikunate.TokenLength = 0
 
-			uname = Capitalize(haikunate.Haikunate())
+			uname = capitalize(haikunate.Haikunate())
 		} else {
 			uname = cookieUName.Value
 		}
@@ -35,4 +36,13 @@ func CookieAuth(f http.HandlerFunc) http.HandlerFunc {
 
 		f(writer, request)
 	}
+}
+
+func capitalize(s string) string {
+	split := strings.Split(s, " ")
+	for i, str := range split {
+		capitalized := strings.ToUpper(str[0:1]) + str[1:]
+		split[i] = capitalized
+	}
+	return strings.Join(split, " ")
 }

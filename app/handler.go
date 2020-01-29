@@ -57,7 +57,7 @@ func NewQuestionHandler(db *bolt.DB) *QuestionHandler {
 }
 
 func (handler *QuestionHandler) ListQuestions(writer http.ResponseWriter, request *http.Request) {
-	pageValue := FormValueOrDefault(request, "page", "1")
+	pageValue := formValueOrDefault(request, "page", "1")
 	page, err := strconv.Atoi(pageValue)
 	if err != nil {
 		http.Error(writer, "cannot parse param 'page' to int", http.StatusBadRequest)
@@ -68,7 +68,7 @@ func (handler *QuestionHandler) ListQuestions(writer http.ResponseWriter, reques
 		return
 	}
 
-	sizeValue := FormValueOrDefault(request, "size", "10")
+	sizeValue := formValueOrDefault(request, "size", "10")
 	size, err := strconv.Atoi(sizeValue)
 	if err != nil {
 		http.Error(writer, "cannot parse param 'size' to int", http.StatusBadRequest)
@@ -225,6 +225,14 @@ func (handler *QuestionHandler) SubmitQuestion(writer http.ResponseWriter, reque
 
 	writer.Header().Set("Location", PrefixBasePath("/questions"))
 	writer.WriteHeader(http.StatusFound)
+}
+
+func formValueOrDefault(request *http.Request, key string, defaultValue string) string {
+	value := request.FormValue(key)
+	if value != "" {
+		return value
+	}
+	return defaultValue
 }
 
 func itob(id int) []byte {
