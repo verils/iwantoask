@@ -8,7 +8,7 @@
   <base href="{{ .BasePath }}/">
   <title>Ask a question</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.bootcss.com/twitter-bootstrap/4.3.0/css/bootstrap.min.css">
 </head>
 
 <body>
@@ -18,7 +18,7 @@
   </nav>
 </header>
 <div class="container">
-  <form action="./ask" method="POST">
+  <form id="form" action="./ask" method="POST" onsubmit="onsubmit">
     <div class="form-group">
       <label for="title">主题</label>
       {{ if .TitleError }}
@@ -38,5 +38,10 @@
   </form>
 </div>
 </body>
-
+<script>
+  document.getElementById('form').onsubmit = function (e) {
+    let submitBtn = e.target.querySelector('button[type="submit');
+    submitBtn.disabled = true
+  }
+</script>
 </html>

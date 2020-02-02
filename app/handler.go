@@ -171,12 +171,13 @@ func (handler *QuestionHandler) SubmitQuestion(writer http.ResponseWriter, reque
 
 	title := request.PostFormValue("title")
 	view.Title = title
-	if title == "" {
-		view.TitleError = "请填写标题"
-	}
 
 	detail := request.PostFormValue("detail")
 	view.Detail = detail
+
+	if title == "" {
+		view.TitleError = "请填写标题"
+	}
 
 	if view.HasError() {
 		askTemplate := template.Must(template.ParseFiles("template/ask.html"))
