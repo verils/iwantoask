@@ -1,6 +1,6 @@
 FROM alpine
 
-WORKDIR /app
+WORKDIR /iwantoask
 
 COPY static/ static/
 COPY template/ template/

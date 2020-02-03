@@ -7,7 +7,9 @@
 ```shell script
 docker pull verils/iwantoask
 
-docker run --name iwantoask -p 8080:8080 -d verils/iwantoask
+docker volume create iwantoask_data
+
+docker run --name iwantoask -p 8080:8080 -v iwantoask_data:/iwantoask/data -d verils/iwantoask
 ```
 
 ### Todos

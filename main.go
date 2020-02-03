@@ -6,6 +6,8 @@ import (
 	"github.com/verils/iwantoask/app"
 	"log"
 	"net/http"
+	"os"
+	"path"
 	"time"
 )
 
@@ -35,7 +37,14 @@ func main() {
 }
 
 func initDB() *bolt.DB {
-	db, err := bolt.Open("iwantoask.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
+	dbPath := "data/iwantoask.db"
+
+	dbDir := path.Dir(dbPath)
+	if _, err := os.Stat(dbDir); os.IsNotExist(err) {
+		_ = os.Mkdir(dbDir, os.ModeDir)
+	}
+
+	db, err := bolt.Open(dbPath, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		log.Fatalf("[ERROR] failed to open database: %s", err.Error())
 	}
