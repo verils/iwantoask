@@ -4,6 +4,8 @@
 
 ### How to run
 
+Pull the image from docker and run it.
+
 ```shell script
 docker pull verils/iwantoask
 
